@@ -1,22 +1,156 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState, useRef } from "react";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
+import {
+  Provider as PaperProvider,
+  FAB,
+  Portal,
+  Modal,
+  TextInput,
+  Button,
+} from "react-native-paper";
+
+import { handleInput, clearInput } from "./src/Order";
+import { getPoints } from "./src/Loyalty";
 
 export default function App() {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [points, setPoints] = useState(0);
+  const [visible, setVisible] = useState(false);
+
+  const scrollViewRef = useRef(null);
+
+  const openModal = () => {
+    setVisible(true);
+
+    if (messages.length === 0) {
+      const welcome = handleInput("") || [];
+
+      setMessages(welcome.map((m) => "Bot: " + m));
+      setPoints(getPoints());
+    }
+  };
+
+  const closeModal = () => setVisible(false);
+
+  const sendMessage = () => {
+    if (!input.trim()) return;
+
+    const userMsg = "You: " + input;
+
+    const response = handleInput(input) || [];
+
+    const botMsgs = response.map((m) => "Bot: " + m);
+
+    setMessages((prev) => [...prev, userMsg, ...botMsgs]);
+
+    setInput("");
+
+    setPoints(getPoints());
+
+    if (response.includes("Thanks for visiting Sana's Coffee.")) {
+      clearInput();
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <Text>Rich was here</Text>
-      <Text>So there...</Text>
-      <StatusBar style="auto" />
-    </View>
+    <PaperProvider>
+      <View style={styles.container}>
+        <Text style={styles.title}>☕ Sana's Coffee Loyalty</Text>
+
+        <Text style={styles.points}>{points}</Text>
+
+        <Text style={styles.subtitle}>
+          Order 10 times to get 1 FREE 🎁
+        </Text>
+
+        <Portal>
+          <Modal
+            visible={visible}
+            onDismiss={closeModal}
+            contentContainerStyle={styles.modal}
+          >
+            <Text style={styles.chatTitle}>🤖 Order Bot</Text>
+
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.chatBox}
+              onContentSizeChange={() =>
+                scrollViewRef.current?.scrollToEnd({ animated: true })
+              }
+            >
+              {messages.map((msg, index) => (
+                <Text key={index} style={styles.message}>
+                  {msg}
+                </Text>
+              ))}
+            </ScrollView>
+
+            <TextInput
+              mode="outlined"
+              placeholder="Type your order..."
+              value={input}
+              onChangeText={setInput}
+              style={styles.input}
+            />
+
+            <Button mode="contained" onPress={sendMessage}>
+              Send
+            </Button>
+          </Modal>
+        </Portal>
+
+        <FAB icon="chat" style={styles.fab} onPress={openModal} />
+      </View>
+    </PaperProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f5f5f5",
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "bold",
+  },
+  points: {
+    fontSize: 48,
+    marginVertical: 10,
+    fontWeight: "bold",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "gray",
+  },
+  fab: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+  },
+  modal: {
+    backgroundColor: "white",
+    margin: 20,
+    padding: 20,
+    borderRadius: 10,
+    height: "70%",
+  },
+  chatTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  chatBox: {
+    flex: 1,
+    marginBottom: 10,
+  },
+  message: {
+    marginVertical: 4,
+  },
+  input: {
+    marginBottom: 10,
   },
 });
