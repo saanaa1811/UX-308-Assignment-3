@@ -9,7 +9,7 @@ import {
   Button,
 } from "react-native-paper";
 
-import { handleInput, clearInput } from "./src/Order";
+import { handleInput, clearInput } from "./order";
 import { getPoints } from "./src/Loyalty";
 
 export default function App() {
